@@ -1,0 +1,43 @@
+{
+  "name": "project-builder",
+  "displayName": "Project Builder",
+  "description": "AI-first project bootstrap generator",
+  "version": "0.0.1",
+  "publisher": "arnaud",
+  "engines": {
+    "vscode": "^1.125.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:projectBuilder.newProject"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "projectBuilder.newProject",
+        "title": "New Project",
+        "category": "Project Builder"
+      }
+    ]
+  },
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "package_": "npm run build && vsce package",
+    "compile": "tsc",
+    "package": "npx @vscode/vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "@types/vscode": "^1.125.0",
+    "@vscode/test-electron": "^3.0.0",
+    "@vscode/vsce": "^3.9.2",
+    "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "yaml": "^2.9.0"
+  }
+}

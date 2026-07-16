@@ -1,0 +1,9 @@
+.vscode/**
+src/**
+.gitignore
+tsconfig.json
+node_modules/**
+*.map
+.DS_Store
+Thumbs.db
+.idea/

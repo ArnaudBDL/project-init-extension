@@ -1,0 +1,45 @@
+project:
+  name: "{{PROJECT_NAME_YAML}}"
+  slug: "{{PROJECT_SLUG_YAML}}"
+
+frontend:
+  enabled: {{PROJECT_HAS_FRONTEND}}
+  stack: "{{FRONTEND_STACK}}"
+  name: "{{PROJECT_FRONTEND_NAME}}"
+  variant: "{{FRONTEND_VARIANT}}"
+  variantName: "{{PROJECT_FRONTEND_VARIANT_NAME}}"
+
+server:
+  enabled: {{PROJECT_HAS_SERVER}}
+  stack: "{{BACKEND_STACK}}"
+  name: "{{PROJECT_BACKEND_NAME}}"
+  framework: "{{BACKEND_FRAMEWORK}}"
+  frameworkName: "{{PROJECT_BACKEND_FRAMEWORK_NAME}}"
+  local: {{ENABLED_SERVER_LOCAL}}
+  remote: {{ENABLED_SERVER_REMOTE}}
+  assets: {{ENABLED_SERVER_ASSETS}}
+
+data:
+{{DATABASES_YAML}}
+{{SEARCH_ENGINES_YAML}}
+
+shell:
+  desktop:
+    enabled: {{PROJECT_HAS_DESKTOP}}
+    stack: "{{SHELL_DESKTOP}}"
+    name: "{{PROJECT_DESKTOP_SHELL_NAME}}"
+
+  mobile:
+    enabled: {{PROJECT_HAS_MOBILE}}
+    stack: "{{SHELL_MOBILE}}"
+    name: "{{PROJECT_MOBILE_SHELL_NAME}}"
+
+  web:
+    enabled: {{PROJECT_HAS_WEB}}
+    stack: "{{SHELL_WEB}}"
+    name: "{{PROJECT_WEB_SHELL_NAME}}"
+
+legacy:
+  enabled: {{PROJECT_HAS_LEGACY}}
+  codebase: "09-LEGACY/codebase"
+  migration: "09-LEGACY/migration"

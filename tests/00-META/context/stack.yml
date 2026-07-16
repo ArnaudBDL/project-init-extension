@@ -1,0 +1,51 @@
+project:
+  name: "My Test Project"
+  slug: "my-test-project"
+
+frontend:
+  enabled: true
+  stack: "angular"
+  name: "Angular"
+  variant: "none"
+  variantName: "None"
+
+server:
+  enabled: true
+  stack: "go"
+  name: "Go"
+  framework: "none"
+  frameworkName: "None"
+  local: true
+  remote: true
+  assets: true
+
+data:
+  databases:
+    - key: "postgresql"
+      name: "PostgreSQL"
+    - key: "sqlite"
+      name: "SQLite"
+  searchEngines:
+    - key: "elasticsearch"
+      name: "Elasticsearch"
+
+shell:
+  desktop:
+    enabled: true
+    stack: "tauri"
+    name: "Tauri"
+
+  mobile:
+    enabled: true
+    stack: "capacitor"
+    name: "Capacitor"
+
+  web:
+    enabled: true
+    stack: "docker"
+    name: "Docker"
+
+legacy:
+  enabled: false
+  codebase: "09-LEGACY/codebase"
+  migration: "09-LEGACY/migration"

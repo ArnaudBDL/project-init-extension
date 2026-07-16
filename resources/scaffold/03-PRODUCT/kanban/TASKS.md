@@ -1,0 +1,11 @@
+# Tasks - {{PROJECT_NAME}}
+
+## BACKLOG
+
+## DOING
+
+## REVIEW
+
+## DONE
+
+## PAUSED
