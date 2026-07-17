@@ -40,10 +40,12 @@ They are not historical decisions.
 - Go: backend/runtime implementation technology.
 - Tauri: desktop shell implementation technology.
 - Capacitor: mobile shell implementation technology.
-- Docker: web shell implementation technology.
+- Docker Web Runtime: web shell implementation technology.
 - PostgreSQL: database or data store.
 - SQLite: database or data store.
 - Elasticsearch: search engine.
+- OpenSearch: search engine.
+- Algolia: search engine.
 - Kanban: project task management convention.
 - Specifications: project specification format and workflow.
 
@@ -57,5 +59,7 @@ They are not historical decisions.
 - postgresql/
 - sqlite/
 - elasticsearch/
+- opensearch/
+- algolia/
 - kanban/
 - specs/

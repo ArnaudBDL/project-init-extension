@@ -1,4 +1,4 @@
-# Tasks - My Test Project
+# Tasks - tests
 
 ## BACKLOG
 

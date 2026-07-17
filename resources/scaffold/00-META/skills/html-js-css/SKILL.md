@@ -9,7 +9,7 @@ It applies when:
 
 ```yaml
 frontend:
-	stack: "html-js-css"
+  stack: "html-js-css"
 ```
 
 ## Role

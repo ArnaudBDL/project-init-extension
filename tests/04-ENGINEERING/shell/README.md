@@ -8,7 +8,7 @@ A shell exposes or integrates the client with a target desktop, mobile or web en
 
  - Desktop: Tauri
  - Mobile: Capacitor
- - Web: Docker
+ - Web: Docker Web Runtime
 
 ## Generated Structure
 

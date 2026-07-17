@@ -18,18 +18,14 @@ import {
 } from '../services/template.service';
 
 import {
-    createGenericSkillTemplateContext,
     createTemplateContext,
     getSelectedSkillKeys
 } from '../templates/template-context';
 
-const SPECIALIZED_SKILL_KEYS = new Set<string>([
-    'angular',
-    'html-js-css',
-    'go',
-    'tauri',
-    'docker'
-]);
+const PERMANENT_SKILL_KEYS = [
+    'kanban',
+    'specs'
+] as const;
 
 export class ProjectGenerator {
     private readonly filesystemService =
@@ -72,6 +68,11 @@ export class ProjectGenerator {
             );
         }
 
+        await this.validateRequiredSkills(
+            scaffoldRootUri,
+            profile
+        );
+
         const context = createTemplateContext(
             profile
         );
@@ -102,13 +103,6 @@ export class ProjectGenerator {
             );
         }
 
-        await this.generateGenericSkills(
-            profile,
-            workspaceRootUri,
-            report,
-            generatedDirectories
-        );
-
         await this.cleanupGeneratedDirectories(
             workspaceRootUri,
             generatedDirectories
@@ -121,6 +115,62 @@ export class ProjectGenerator {
         );
 
         return report;
+    }
+
+    private async validateRequiredSkills(
+        scaffoldRootUri: vscode.Uri,
+        profile: ProjectProfile
+    ): Promise<void> {
+        const requiredSkillKeys = [
+            ...getSelectedSkillKeys(profile),
+            ...PERMANENT_SKILL_KEYS
+        ];
+
+        const invalidSkills: string[] = [];
+
+        for (const skillKey of requiredSkillKeys) {
+            const skillUri = vscode.Uri.joinPath(
+                scaffoldRootUri,
+                '00-META',
+                'skills',
+                skillKey,
+                'SKILL.md'
+            );
+
+            if (
+                !(await this.filesystemService.exists(
+                    skillUri
+                ))
+            ) {
+                invalidSkills.push(
+                    `${skillKey}: missing 00-META/skills/${skillKey}/SKILL.md`
+                );
+
+                continue;
+            }
+
+            const content =
+                await this.filesystemService.readFile(
+                    skillUri
+                );
+
+            if (content.trim() === '') {
+                invalidSkills.push(
+                    `${skillKey}: empty 00-META/skills/${skillKey}/SKILL.md`
+                );
+            }
+        }
+
+        if (invalidSkills.length > 0) {
+            throw new Error(
+                [
+                    'Required specialized skills are missing or empty:',
+                    ...invalidSkills.map(
+                        skill => `- ${skill}`
+                    )
+                ].join('\n')
+            );
+        }
     }
 
     private async generateTemplate(
@@ -167,98 +217,6 @@ export class ProjectGenerator {
             template.relativePath,
             generatedDirectories
         );
-    }
-
-    private async generateGenericSkills(
-        profile: ProjectProfile,
-        workspaceRootUri: vscode.Uri,
-        report: GenerationReport,
-        generatedDirectories: Set<string>
-    ): Promise<void> {
-        const genericTemplateUri = vscode.Uri.joinPath(
-            this.extensionUri,
-            'resources',
-            'templates',
-            'skills',
-            'generic',
-            'SKILL.md'
-        );
-
-        const genericSkillKeys =
-            getSelectedSkillKeys(
-                profile
-            ).filter(
-                skill =>
-                    !SPECIALIZED_SKILL_KEYS.has(
-                        skill
-                    )
-            );
-
-        if (genericSkillKeys.length === 0) {
-            return;
-        }
-
-        if (
-            !(await this.filesystemService.exists(
-                genericTemplateUri
-            ))
-        ) {
-            throw new Error(
-                'The generic skill template is missing: resources/templates/skills/generic/SKILL.md'
-            );
-        }
-
-        const genericTemplate =
-            await this.templateService.readTemplate(
-                genericTemplateUri
-            );
-
-        for (const skillKey of genericSkillKeys) {
-            const relativePath =
-                `00-META/skills/${skillKey}/SKILL.md`;
-
-            const targetUri = vscode.Uri.joinPath(
-                workspaceRootUri,
-                '00-META',
-                'skills',
-                skillKey,
-                'SKILL.md'
-            );
-
-            const context =
-                createGenericSkillTemplateContext(
-                    profile,
-                    skillKey
-                );
-
-            const renderedContent =
-                this.templateService.render(
-                    genericTemplate,
-                    context
-                );
-
-            const result =
-                await this.filesystemService.writeFile(
-                    targetUri,
-                    renderedContent,
-                    false
-                );
-
-            if (result.created) {
-                report.createdFiles.push(
-                    relativePath
-                );
-            } else {
-                report.skippedFiles.push(
-                    relativePath
-                );
-            }
-
-            this.collectParentDirectories(
-                relativePath,
-                generatedDirectories
-            );
-        }
     }
 
     private shouldGenerateTemplate(
@@ -405,10 +363,6 @@ export class ProjectGenerator {
             skillKey === 'specs'
         ) {
             return true;
-        }
-
-        if (skillKey === 'generic') {
-            return false;
         }
 
         return getSelectedSkillKeys(

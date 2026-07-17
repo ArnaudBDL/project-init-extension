@@ -1,6 +1,6 @@
 project:
-  name: "My Test Project"
-  slug: "my-test-project"
+  name: "tests"
+  slug: "tests"
 
 frontend:
   enabled: true
@@ -28,6 +28,10 @@ data:
   searchEngines:
     - key: "elasticsearch"
       name: "Elasticsearch"
+    - key: "opensearch"
+      name: "OpenSearch"
+    - key: "algolia"
+      name: "Algolia"
 
 shell:
   desktop:
@@ -43,9 +47,9 @@ shell:
   web:
     enabled: true
     stack: "docker"
-    name: "Docker"
+    name: "Docker Web Runtime"
 
 legacy:
-  enabled: false
+  enabled: true
   codebase: "09-LEGACY/codebase"
   migration: "09-LEGACY/migration"

@@ -1,4 +1,4 @@
-# My Test Project
+# tests
 
 Development workspace for the project.
 
@@ -9,10 +9,10 @@ This directory contains the implementation code for the generated application.
 - Frontend: Angular
 - Backend: Go
 - Databases: PostgreSQL, SQLite
-- Search Engines: Elasticsearch
+- Search Engines: Elasticsearch, OpenSearch, Algolia
 - Desktop Shell: Tauri
 - Mobile Shell: Capacitor
-- Web Shell: Docker
+- Web Shell: Docker Web Runtime
 
 
 ## Runtime Targets
@@ -32,7 +32,7 @@ The application code may still need to be initialized depending on the generated
 - Install the backend/runtime toolchain required by Go.
 - Install the desktop shell toolchain required by Tauri.
 - Install the mobile shell toolchain required by Capacitor.
-- Install the web shell or orchestration tooling required by Docker.
+- Install the web shell or orchestration tooling required by Docker Web Runtime.
 - Define shared asset publishing requirements for this project.
 
 ## Install

@@ -17,7 +17,7 @@ This directory contains server-side runtime or delivery material for this projec
 - Databases: PostgreSQL, SQLite
 
 
-- Search Engines: Elasticsearch
+- Search Engines: Elasticsearch, OpenSearch, Algolia
 
 
 Selected data services describe the project-level technical profile.

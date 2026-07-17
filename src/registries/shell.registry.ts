@@ -36,7 +36,7 @@ export const MOBILE_SHELLS: readonly Shell[] = [
 export const WEB_SHELLS: readonly Shell[] = [
     {
         key: 'docker',
-        label: 'Docker'
+        label: 'Docker Web Runtime'
     }
 ];
 

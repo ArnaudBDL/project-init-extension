@@ -68,7 +68,6 @@ When one task affects multiple specialized areas, read every relevant skill.
 - A mitigation requiring implementation must be tracked in the Kanban.
 - A mitigation requiring an unresolved choice must be tracked as an open arbitration.
 
-
 ## Project Workflow
 
 AI agents must use the following workflow according to the requested scope.
@@ -83,8 +82,23 @@ Before creating specifications, tasks or implementation code:
 - identify unresolved decisions affecting the requested scope
 - do not create implementation work from open arbitrations
 
-The entire project framing does not need to be complete when the requested
-scope is independently confirmed.
+When project framing is incomplete or the user requests a framing interview, follow:
+
+- .github/prompts/project-start.prompt.md
+- the `/project-start` prompt command when available
+
+The project-start prompt defines the mandatory framing interview discipline, including:
+
+- factual and decision-oriented questions
+- question limits per interview round
+- document responsibility boundaries
+- validation before confirmed project facts are written
+- pending-question tracking between sessions
+- stack and product-need tension reporting
+
+Do not conduct an improvised project framing interview when the project-start prompt is available.
+
+The entire project framing does not need to be complete when the requested scope is independently confirmed.
 
 Blocking decisions for the requested scope must be resolved before continuing.
 
@@ -99,8 +113,7 @@ Before creating or modifying a specification, follow:
 - 00-META/skills/specs/SKILL.md
 - .github/prompts/project-specs.prompt.md
 
-A specification must use the Ready status before implementation tasks are
-created from it.
+A specification must use the Ready status before implementation tasks are created from it.
 
 A new specification is not required for:
 
@@ -122,8 +135,7 @@ Before creating or modifying tasks, follow:
 - 00-META/skills/kanban/SKILL.md
 - .github/prompts/project-kanban.prompt.md
 
-Implementation tasks created from a specification must reference the relevant
-specification in their detail file.
+Implementation tasks created from a specification must reference the relevant specification in their detail file.
 
 A task must:
 
@@ -161,9 +173,7 @@ When implementation is complete:
 - verify architecture, governance and applicable skills
 - verify that no unrelated changes were introduced
 
-Do not move a task directly from DOING to DONE unless the work is explicitly
-exempted from review because it is trivial and has no functional,
-architectural or security impact.
+Do not move a task directly from DOING to DONE unless the work is explicitly exempted from review because it is trivial and has no functional, architectural or security impact.
 
 ### 6. Completion
 
@@ -171,8 +181,7 @@ After successful review:
 
 - move the task from REVIEW to DONE
 - update the affected specification when necessary
-- mark a specification as Implemented only when its complete scope is delivered
-and validated
+- mark a specification as Implemented only when its complete scope is delivered and validated
 - update Engineering documentation when commands, structure or usage changed
 - create or update an ADR when implementation introduced a durable decision
 - update project context only when the confirmed project truth changed
@@ -202,3 +211,8 @@ Do not skip a required stage.
 - Backend/runtime code belongs in the generated server section when present.
 - Platform shell code belongs in the generated shell section when present.
 - Experimental work belongs in 05-LAB until reviewed and promoted.
+
+- Legacy source code belongs in 09-LEGACY/codebase/.
+- Legacy migration analysis and planning belong in 09-LEGACY/migration/.
+- Target implementation code belongs in 04-ENGINEERING/.
+- Do not modify legacy code without explicit migration work.

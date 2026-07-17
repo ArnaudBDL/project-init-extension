@@ -4,7 +4,7 @@ This directory contains shared asset delivery material for this project.
 
 ## Asset Server Support
 
-- Enabled: ${ENABLED_SERVER_ASSETS}
+- Enabled: true
 
 ## Role
 

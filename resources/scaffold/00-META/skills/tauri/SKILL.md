@@ -9,7 +9,7 @@ It applies when:
 ```yaml
 shell:
   desktop:
-	stack: "tauri"
+  stack: "tauri"
 ```
 
 ## Role

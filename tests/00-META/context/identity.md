@@ -2,11 +2,11 @@
 
 ## Project Name
 
-My Test Project
+tests
 
 ## Project Slug
 
-my-test-project
+tests
 
 ## Description
 

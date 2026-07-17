@@ -8,7 +8,7 @@ It applies when:
 
 ```yaml
 frontend:
-	stack: "angular"
+  stack: "angular"
 ```
 
 ## Role

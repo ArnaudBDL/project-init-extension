@@ -18,7 +18,7 @@ It is based on the CLI interview answers and must stay aligned with stack.yml an
 - Databases: PostgreSQL, SQLite
 
 
-- Search Engines: Elasticsearch
+- Search Engines: Elasticsearch, OpenSearch, Algolia
 
 
 - Local Runtime: enabled
@@ -36,7 +36,7 @@ It is based on the CLI interview answers and must stay aligned with stack.yml an
 - Mobile Shell: Capacitor
 
 
-- Web Shell: Docker
+- Web Shell: Docker Web Runtime
 
 
 ## Layers
@@ -82,6 +82,8 @@ It is based on the CLI interview answers and must stay aligned with stack.yml an
 ### Search Engines
 
 - Elasticsearch
+- OpenSearch
+- Algolia
 
 ## Architecture Rules
 

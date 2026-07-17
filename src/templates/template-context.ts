@@ -306,24 +306,6 @@ export function createTemplateContext(
     };
 }
 
-export function createGenericSkillTemplateContext(
-    profile: ProjectProfile,
-    skillKey: string
-): TemplateContext {
-    return {
-        ...createTemplateContext(profile),
-
-        SKILL_KEY:
-            skillKey,
-
-        SKILL_LABEL:
-            getSkillLabel(
-                profile,
-                skillKey
-            )
-    };
-}
-
 export function getSelectedSkillKeys(
     profile: ProjectProfile
 ): string[] {
