@@ -13,12 +13,16 @@ export function createProjectProfile(
 
         frontendStack: 'none',
         frontendVariant: 'none',
+        backofficeEnabled: false,
 
         backendStack: 'none',
         backendFramework: 'none',
 
         serverLocalEnabled: false,
-        serverRemoteEnabled: false,
+
+        remoteServerArchitecture: 'none',
+        remoteServiceDomains: [],
+
         serverAssetsEnabled: false,
 
         databases: [],

@@ -1,4 +1,3 @@
-import * as path from 'path';
 import * as vscode from 'vscode';
 
 import {
@@ -12,6 +11,10 @@ import {
 import {
     askBackendStack
 } from '../interview/backend-stack.step';
+
+import {
+    askClientTargets
+} from '../interview/client-targets.step';
 
 import {
     askDatabases
@@ -50,34 +53,13 @@ import {
 } from '../interview/summary.step';
 
 import {
-    ProjectProfile
-} from '../models/project-profile';
-
-import {
-    loadProjectProfile
-} from '../services/project-profile-loader.service';
-
-import {
     createProjectProfile
 } from '../services/project-profile.service';
-
-import {
-    getExistingStackFile
-} from '../services/scaffold-detection.service';
 
 import {
     getWorkspaceName,
     getWorkspaceRoot
 } from '../services/workspace.service';
-
-const OPEN_PROJECT_START_PROMPT =
-    'Open Project Start Prompt';
-
-const OPEN_GENERATED_README =
-    'Open Generated README';
-
-const COMPLETE_EXISTING_SCAFFOLD =
-    'Complete Existing Scaffold';
 
 export async function newProjectCommand(
     extensionUri: vscode.Uri
@@ -96,88 +78,6 @@ export async function newProjectCommand(
         return;
     }
 
-    const stackFile = getExistingStackFile(
-        workspaceRoot
-    );
-
-    if (stackFile !== undefined) {
-        await runExistingScaffoldCompletion(
-            extensionUri,
-            workspaceRoot,
-            stackFile
-        );
-
-        return;
-    }
-
-    await runNewProjectGeneration(
-        extensionUri,
-        workspaceRoot,
-        workspaceName
-    );
-}
-
-async function runExistingScaffoldCompletion(
-    extensionUri: vscode.Uri,
-    workspaceRoot: string,
-    stackFile: string
-): Promise<void> {
-    let profile: ProjectProfile;
-
-    try {
-        profile = loadProjectProfile(
-            workspaceRoot,
-            stackFile
-        );
-    } catch (error: unknown) {
-        const message =
-            error instanceof Error
-                ? error.message
-                : String(error);
-
-        await vscode.window.showErrorMessage(
-            `Existing scaffold profile could not be loaded: ${message}`
-        );
-
-        return;
-    }
-
-    const action =
-        await vscode.window.showInformationMessage(
-            [
-                `An existing scaffold was detected for ${profile.projectName}.`,
-                'Project Builder will use 00-META/context/stack.yml',
-                'and generate only missing files.'
-            ].join(' '),
-            {
-                modal: true
-            },
-            COMPLETE_EXISTING_SCAFFOLD
-        );
-
-    if (
-        action !== COMPLETE_EXISTING_SCAFFOLD
-    ) {
-        await vscode.window.showInformationMessage(
-            'Scaffold completion cancelled.'
-        );
-
-        return;
-    }
-
-    await generateProject(
-        extensionUri,
-        workspaceRoot,
-        profile,
-        'Completing'
-    );
-}
-
-async function runNewProjectGeneration(
-    extensionUri: vscode.Uri,
-    workspaceRoot: string,
-    workspaceName: string
-): Promise<void> {
     const profile = createProjectProfile(
         workspaceRoot
     );
@@ -193,8 +93,7 @@ async function runNewProjectGeneration(
     profile.projectName = identity.name;
     profile.projectSlug = identity.slug;
 
-    const frontendStack =
-        await askFrontendStack();
+    const frontendStack = await askFrontendStack();
 
     if (frontendStack === undefined) {
         return;
@@ -211,11 +110,16 @@ async function runNewProjectGeneration(
         return;
     }
 
-    profile.frontendVariant =
-        frontendVariant;
+    profile.frontendVariant = frontendVariant;
 
-    const backendStack =
-        await askBackendStack();
+    const clientTargetsCompleted =
+        await askClientTargets(profile);
+
+    if (!clientTargetsCompleted) {
+        return;
+    }
+
+    const backendStack = await askBackendStack();
 
     if (backendStack === undefined) {
         return;
@@ -236,16 +140,13 @@ async function runNewProjectGeneration(
         backendFramework;
 
     const serverTargetsCompleted =
-        await askServerTargets(
-            profile
-        );
+        await askServerTargets(profile);
 
     if (!serverTargetsCompleted) {
         return;
     }
 
-    const databases =
-        await askDatabases();
+    const databases = await askDatabases();
 
     if (databases === undefined) {
         return;
@@ -260,13 +161,10 @@ async function runNewProjectGeneration(
         return;
     }
 
-    profile.searchEngines =
-        searchEngines;
+    profile.searchEngines = searchEngines;
 
     const shellTargetsCompleted =
-        await askShellTargets(
-            profile
-        );
+        await askShellTargets(profile);
 
     if (!shellTargetsCompleted) {
         return;
@@ -279,8 +177,7 @@ async function runNewProjectGeneration(
         return;
     }
 
-    profile.legacyEnabled =
-        legacyEnabled;
+    profile.legacyEnabled = legacyEnabled;
 
     const generationConfirmed =
         await showInterviewSummary(
@@ -295,20 +192,6 @@ async function runNewProjectGeneration(
         return;
     }
 
-    await generateProject(
-        extensionUri,
-        workspaceRoot,
-        profile,
-        'Generating'
-    );
-}
-
-async function generateProject(
-    extensionUri: vscode.Uri,
-    workspaceRoot: string,
-    profile: ProjectProfile,
-    progressTitle: string
-): Promise<void> {
     const generator = new ProjectGenerator(
         extensionUri
     );
@@ -321,7 +204,7 @@ async function generateProject(
                         vscode.ProgressLocation.Notification,
 
                     title:
-                        `${progressTitle} ${profile.projectName}`,
+                        `Generating ${profile.projectName}`,
 
                     cancellable: false
                 },
@@ -338,34 +221,13 @@ async function generateProject(
                 }
             );
 
-        const action =
-            await vscode.window.showInformationMessage(
-                [
-                    `Project scaffold generated for ${profile.projectName}.`,
-                    `${report.createdFiles.length} file(s) created.`,
-                    `${report.skippedFiles.length} existing file(s) preserved.`
-                ].join(' '),
-                OPEN_PROJECT_START_PROMPT,
-                OPEN_GENERATED_README
-            );
-
-        if (
-            action === OPEN_PROJECT_START_PROMPT
-        ) {
-            await openProjectStartPrompt(
-                workspaceRoot
-            );
-
-            return;
-        }
-
-        if (
-            action === OPEN_GENERATED_README
-        ) {
-            await openGeneratedReadme(
-                workspaceRoot
-            );
-        }
+        await vscode.window.showInformationMessage(
+            [
+                `Project scaffold generated for ${profile.projectName}.`,
+                `${report.createdFiles.length} file(s) created.`,
+                `${report.skippedFiles.length} existing file(s) preserved.`
+            ].join(' ')
+        );
     } catch (error: unknown) {
         const message =
             error instanceof Error
@@ -374,61 +236,6 @@ async function generateProject(
 
         await vscode.window.showErrorMessage(
             `Project generation failed: ${message}`
-        );
-    }
-}
-
-async function openProjectStartPrompt(
-    workspaceRoot: string
-): Promise<void> {
-    const promptPath = path.join(
-        workspaceRoot,
-        '.github',
-        'prompts',
-        'project-start.prompt.md'
-    );
-
-    await openGeneratedDocument(
-        promptPath
-    );
-}
-
-async function openGeneratedReadme(
-    workspaceRoot: string
-): Promise<void> {
-    const readmePath = path.join(
-        workspaceRoot,
-        'README.md'
-    );
-
-    await openGeneratedDocument(
-        readmePath
-    );
-}
-
-async function openGeneratedDocument(
-    filePath: string
-): Promise<void> {
-    try {
-        const document =
-            await vscode.workspace.openTextDocument(
-                vscode.Uri.file(filePath)
-            );
-
-        await vscode.window.showTextDocument(
-            document,
-            {
-                preview: false
-            }
-        );
-    } catch (error: unknown) {
-        const message =
-            error instanceof Error
-                ? error.message
-                : String(error);
-
-        await vscode.window.showErrorMessage(
-            `Unable to open generated document: ${message}`
         );
     }
 }

@@ -1,0 +1,33 @@
+- apres l'execution de la generation du repeertoire, dans 04-ENGINEERING, ne serait il pas interessant d'installer et initialliser les projets avec les versions maitriser et non celle decidee par un Agent IA (npm i, go, python ....) ??
+
+
+
+
+
+04-ENGINEERING/
+├── client/
+│   ├── <project-slug>-client-backend/
+│   └── <project-slug>-client-frontend/
+├── server/
+│   ├── modules/
+│   │   └── <project-slug>-server-modules/
+│   ├── local/
+│   │   └── <project-slug>-server-local/
+│   └── remote/
+│       ├── <project-slug>-server-remote/
+│       ├── <project-slug>-server-assets/
+│       ├── <project-slug>-server-<domain>-service/
+│       └── <project-slug>-server-<domain>-service/
+└── shell/
+    ├── <project-slug>-shell-desktop/
+    ├── <project-slug>-shell-mobile/
+    └── <project-slug>-shell-web/
+
+
+
+
+
+
+
+
+

@@ -8,6 +8,8 @@ frontend:
   name: "{{PROJECT_FRONTEND_NAME}}"
   variant: "{{FRONTEND_VARIANT}}"
   variantName: "{{PROJECT_FRONTEND_VARIANT_NAME}}"
+  frontoffice: {{PROJECT_HAS_FRONTOFFICE}}
+  backoffice: {{PROJECT_HAS_BACKOFFICE}}
 
 server:
   enabled: {{PROJECT_HAS_SERVER}}
@@ -15,9 +17,15 @@ server:
   name: "{{PROJECT_BACKEND_NAME}}"
   framework: "{{BACKEND_FRAMEWORK}}"
   frameworkName: "{{PROJECT_BACKEND_FRAMEWORK_NAME}}"
+
   local: {{ENABLED_SERVER_LOCAL}}
-  remote: {{ENABLED_SERVER_REMOTE}}
-  assets: {{ENABLED_SERVER_ASSETS}}
+
+  remote:
+    enabled: {{PROJECT_HAS_REMOTE_SERVER}}
+    architecture: "{{REMOTE_SERVER_ARCHITECTURE}}"
+    assets: {{ENABLED_SERVER_ASSETS}}
+    serviceDomains:
+{{REMOTE_SERVICE_DOMAINS_YAML}}
 
 data:
 {{DATABASES_YAML}}

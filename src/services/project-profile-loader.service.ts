@@ -23,6 +23,15 @@ interface StackFrontend {
     name?: unknown;
     variant?: unknown;
     variantName?: unknown;
+    frontoffice?: unknown;
+    backoffice?: unknown;
+}
+
+interface StackServerRemote {
+    enabled?: unknown;
+    architecture?: unknown;
+    assets?: unknown;
+    serviceDomains?: unknown;
 }
 
 interface StackServer {
@@ -33,7 +42,6 @@ interface StackServer {
     frameworkName?: unknown;
     local?: unknown;
     remote?: unknown;
-    assets?: unknown;
 }
 
 interface StackDataService {
@@ -99,6 +107,11 @@ export function loadProjectProfile(
         document.server
     );
 
+    const remoteServer =
+        asObject<StackServerRemote>(
+            server.remote
+        );
+
     const data = asObject<StackData>(
         document.data
     );
@@ -152,6 +165,10 @@ export function loadProjectProfile(
         'none'
     );
 
+    profile.backofficeEnabled = readBoolean(
+        frontend.backoffice
+    );
+
     profile.backendStack = readString(
         server.stack,
         'none'
@@ -166,12 +183,22 @@ export function loadProjectProfile(
         server.local
     );
 
-    profile.serverRemoteEnabled = readBoolean(
-        server.remote
-    );
+    profile.remoteServerArchitecture =
+        readRemoteServerArchitecture(
+            remoteServer.architecture,
+            'server.remote.architecture',
+            stackFile
+        );
+
+    profile.remoteServiceDomains =
+        readStringArray(
+            remoteServer.serviceDomains,
+            'server.remote.serviceDomains',
+            stackFile
+        );
 
     profile.serverAssetsEnabled = readBoolean(
-        server.assets
+        remoteServer.assets
     );
 
     profile.databases = readDataServiceKeys(
@@ -205,6 +232,11 @@ export function loadProjectProfile(
         legacy.enabled
     );
 
+    validateProjectProfile(
+        profile,
+        stackFile
+    );
+
     return profile;
 }
 
@@ -236,12 +268,70 @@ function parseStackDocument(
     return parsed as StackDocument;
 }
 
+function readRemoteServerArchitecture(
+    value: unknown,
+    propertyName: string,
+    stackFile: string
+): ProjectProfile['remoteServerArchitecture'] {
+    if (
+        value === 'none' ||
+        value === 'monolith' ||
+        value === 'microservices'
+    ) {
+        return value;
+    }
+
+    throw new Error(
+        [
+            `Invalid stack profile in ${stackFile}:`,
+            `${propertyName} must be one of:`,
+            'none, monolith, microservices.'
+        ].join(' ')
+    );
+}
+
+function readStringArray(
+    value: unknown,
+    propertyName: string,
+    stackFile: string
+): string[] {
+    if (
+        value === undefined ||
+        value === null
+    ) {
+        return [];
+    }
+
+    if (!Array.isArray(value)) {
+        throw new Error(
+            [
+                `Invalid stack profile in ${stackFile}:`,
+                `${propertyName} must be an array.`
+            ].join(' ')
+        );
+    }
+
+    return value.map(
+        (
+            item: unknown,
+            index: number
+        ): string => readRequiredString(
+            item,
+            `${propertyName}[${index}]`,
+            stackFile
+        )
+    );
+}
+
 function readDataServiceKeys(
     value: unknown,
     propertyName: string,
     stackFile: string
 ): string[] {
-    if (value === undefined || value === null) {
+    if (
+        value === undefined ||
+        value === null
+    ) {
         return [];
     }
 
@@ -311,6 +401,67 @@ function readBoolean(
     value: unknown
 ): boolean {
     return value === true;
+}
+
+function validateProjectProfile(
+    profile: ProjectProfile,
+    stackFile: string
+): void {
+    if (
+        profile.frontendStack === 'none' &&
+        profile.backofficeEnabled
+    ) {
+        throw new Error(
+            [
+                `Invalid stack profile in ${stackFile}:`,
+                'frontend.backoffice cannot be enabled',
+                'when frontend.stack is none.'
+            ].join(' ')
+        );
+    }
+
+    if (
+        profile.remoteServerArchitecture ===
+            'microservices' &&
+        profile.remoteServiceDomains.length === 0
+    ) {
+        throw new Error(
+            [
+                `Invalid stack profile in ${stackFile}:`,
+                'server.remote.serviceDomains must contain',
+                'at least one domain when',
+                'server.remote.architecture is microservices.'
+            ].join(' ')
+        );
+    }
+
+    if (
+        profile.remoteServerArchitecture !==
+            'microservices' &&
+        profile.remoteServiceDomains.length > 0
+    ) {
+        throw new Error(
+            [
+                `Invalid stack profile in ${stackFile}:`,
+                'server.remote.serviceDomains must be empty unless',
+                'server.remote.architecture is microservices.'
+            ].join(' ')
+        );
+    }
+
+    if (
+        profile.remoteServerArchitecture ===
+            'none' &&
+        profile.serverAssetsEnabled
+    ) {
+        throw new Error(
+            [
+                `Invalid stack profile in ${stackFile}:`,
+                'server.remote.assets cannot be enabled when',
+                'server.remote.architecture is none.'
+            ].join(' ')
+        );
+    }
 }
 
 function asObject<T>(

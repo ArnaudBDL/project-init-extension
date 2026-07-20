@@ -1,41 +1,12 @@
-# Angular Skill
+# Angular
 
 ## Purpose
 
-This skill defines how AI agents should work with Angular in this project.
+This skill defines the mandatory engineering rules for Angular work in this project.
 
-It applies when:
+## Role in This Project
 
-```yaml
-frontend:
-  stack: "angular"
-```
-
-## Role
-
-Angular is the frontend application framework.
-
-It owns:
-
-- screens
-- routes
-- UI state
-- components
-- frontend services
-- user interactions
-
-Angular must not own backend runtime logic.
-
-## Mandatory Rules
-
-- Prefer standalone components.
-- Use feature-first organization.
-- Keep UI components focused on presentation and interaction.
-- Keep business/runtime logic outside components.
-- Keep shared utilities explicit and limited.
-- Avoid generic catch-all folders when a domain-specific name exists.
-- Keep routing readable and predictable.
-- Keep frontend state separate from backend runtime execution.
+Angular is the selected frontend application framework, owning screens, routes, UI state, components, frontend services and user interactions. Its implementation must remain consistent with `00-META/context/stack.yml`, the active specification, architectural decisions and the existing codebase.
 
 ## Recommended Structure
 
@@ -50,19 +21,36 @@ client/
 				└── routes/
 ```
 
+## Mandatory Rules
+
+- Prefer standalone components.
+- Use feature-first organization.
+- Keep UI components focused on presentation and interaction.
+- Keep business/runtime logic outside components.
+- Keep routing readable and predictable.
+- Validate all external input at the boundary where it enters the system.
+- Preserve existing project conventions unless an approved specification changes them.
+- Keep code, configuration, tests and documentation synchronized.
+- Run the relevant formatter, build, validation and test commands before completion.
+
 ## Forbidden
 
 - Do not place backend runtime logic in Angular.
-- Do not hardcode production data.
 - Do not generate fake services as final implementation.
-- Do not hide important UI behavior in unclear abstractions.
 - Do not change visual structure unless explicitly requested.
+- Do not introduce unrelated dependencies or architectural layers.
+- Do not hardcode credentials, tokens or environment-specific secrets.
+- Do not claim validation succeeded unless the command was actually executed successfully.
 
 ## Agent Instructions
 
-Before generating Angular code, AI agents must read:
+Before changing Angular code:
 
-- 00-META/context/stack.yml
-- 00-META/governance/architecture-rules.md
-- 00-META/governance/naming-rules.md
-- 00-META/skills/angular/SKILL.md
+1. Read this skill completely.
+2. Read `00-META/context/stack.yml` and the active specification.
+3. Inspect the existing implementation and tests.
+4. Follow the established project structure and naming.
+5. Make the smallest coherent change that satisfies the specification.
+6. Validate the affected code with the project commands.
+7. Report assumptions, limitations and any validation that could not be executed.
+

@@ -25,37 +25,37 @@ export class TemplateService {
             (
                 first,
                 second
-            ): number => first.relativePath.localeCompare(
-                second.relativePath
-            )
+            ): number =>
+                first.relativePath.localeCompare(
+                    second.relativePath
+                )
         );
     }
 
     public async readTemplate(
         uri: vscode.Uri
     ): Promise<string> {
-        const content = await vscode.workspace.fs.readFile(uri);
+        const content =
+            await vscode.workspace.fs.readFile(uri);
 
-        return new TextDecoder('utf-8').decode(content);
+        return new TextDecoder(
+            'utf-8'
+        ).decode(content);
     }
 
     public render(
         template: string,
         context: TemplateContext
     ): string {
-        let rendered = template;
+        let rendered =
+            this.renderConditionalBlocks(
+                template,
+                context
+            );
 
-        rendered = this.renderConditionalBlocks(
+        rendered = this.replaceVariables(
             rendered,
             context
-        );
-
-        rendered = rendered.replace(
-            /\{\{([A-Z0-9_]+)\}\}/g,
-            (
-                match: string,
-                key: string
-            ): string => context[key] ?? match
         );
 
         this.assertNoUnresolvedVariables(
@@ -67,26 +67,59 @@ export class TemplateService {
         );
     }
 
+    public renderPath(
+        relativePath: string,
+        context: TemplateContext
+    ): string {
+        const renderedPath =
+            relativePath.replace(
+                /__([A-Z0-9_]+)__/g,
+                (
+                    match: string,
+                    key: string
+                ): string => context[key] ?? match
+            );
+
+        const unresolvedVariable =
+            renderedPath.match(
+                /__[A-Z0-9_]+__/
+            );
+
+        if (unresolvedVariable) {
+            throw new Error(
+                `Unresolved template path variable: ${unresolvedVariable[0]}`
+            );
+        }
+
+        return renderedPath;
+    }
+
     private async walkDirectory(
         directoryUri: vscode.Uri,
         relativeDirectory: string,
         templates: TemplateFile[]
     ): Promise<void> {
-        const entries = await vscode.workspace.fs.readDirectory(
-            directoryUri
-        );
-
-        for (const [name, fileType] of entries) {
-            const sourceUri = vscode.Uri.joinPath(
-                directoryUri,
-                name
+        const entries =
+            await vscode.workspace.fs.readDirectory(
+                directoryUri
             );
 
-            const relativePath = relativeDirectory
-                ? `${relativeDirectory}/${name}`
-                : name;
+        for (const [name, fileType] of entries) {
+            const sourceUri =
+                vscode.Uri.joinPath(
+                    directoryUri,
+                    name
+                );
 
-            if (fileType === vscode.FileType.Directory) {
+            const relativePath =
+                relativeDirectory
+                    ? `${relativeDirectory}/${name}`
+                    : name;
+
+            if (
+                fileType ===
+                vscode.FileType.Directory
+            ) {
                 await this.walkDirectory(
                     sourceUri,
                     relativePath,
@@ -96,7 +129,10 @@ export class TemplateService {
                 continue;
             }
 
-            if (fileType !== vscode.FileType.File) {
+            if (
+                fileType !==
+                vscode.FileType.File
+            ) {
                 continue;
             }
 
@@ -130,7 +166,9 @@ export class TemplateService {
                     key: string,
                     content: string
                 ): string => {
-                    return this.isTruthy(context[key])
+                    return this.isTruthy(
+                        context[key]
+                    )
                         ? content
                         : '';
                 }
@@ -143,7 +181,9 @@ export class TemplateService {
                     key: string,
                     content: string
                 ): string => {
-                    return this.isTruthy(context[key])
+                    return this.isTruthy(
+                        context[key]
+                    )
                         ? ''
                         : content;
                 }
@@ -151,6 +191,19 @@ export class TemplateService {
         } while (rendered !== previousValue);
 
         return rendered;
+    }
+
+    private replaceVariables(
+        content: string,
+        context: TemplateContext
+    ): string {
+        return content.replace(
+            /\{\{([A-Z0-9_]+)\}\}/g,
+            (
+                match: string,
+                key: string
+            ): string => context[key] ?? match
+        );
     }
 
     private isTruthy(

@@ -6,47 +6,84 @@ import {
     askBoolean
 } from './boolean.step';
 
+import {
+    askRemoteServerArchitecture
+} from './remote-architecture.step';
+
+import {
+    askRemoteServiceDomains
+} from './remote-services.step';
+
 export async function askServerTargets(
     profile: ProjectProfile
 ): Promise<boolean> {
-    profile.serverLocalEnabled = false;
-    profile.serverRemoteEnabled = false;
-    profile.serverAssetsEnabled = false;
+    resetServerTargets(profile);
 
-    if (profile.backendStack !== 'none') {
-        const localServer = await askBoolean(
-            'Add local server',
-            true
-        );
-
-        if (localServer === undefined) {
-            return false;
-        }
-
-        profile.serverLocalEnabled = localServer;
-
-        const remoteServer = await askBoolean(
-            'Add remote server',
-            true
-        );
-
-        if (remoteServer === undefined) {
-            return false;
-        }
-
-        profile.serverRemoteEnabled = remoteServer;
+    if (profile.backendStack === 'none') {
+        return true;
     }
 
-    const assetServer = await askBoolean(
-        'Add asset server',
-        false
+    const localServerEnabled = await askBoolean(
+        'Add local server',
+        true
     );
 
-    if (assetServer === undefined) {
+    if (localServerEnabled === undefined) {
         return false;
     }
 
-    profile.serverAssetsEnabled = assetServer;
+    profile.serverLocalEnabled = localServerEnabled;
+
+    const remoteArchitecture =
+        await askRemoteServerArchitecture();
+
+    if (remoteArchitecture === undefined) {
+        return false;
+    }
+
+    profile.remoteServerArchitecture =
+        remoteArchitecture;
+
+    if (
+        profile.remoteServerArchitecture ===
+        'microservices'
+    ) {
+        const remoteServiceDomains =
+            await askRemoteServiceDomains();
+
+        if (remoteServiceDomains === undefined) {
+            return false;
+        }
+
+        profile.remoteServiceDomains =
+            remoteServiceDomains;
+    }
+
+    if (
+        profile.remoteServerArchitecture !==
+        'none'
+    ) {
+        const assetsEnabled = await askBoolean(
+            'Add remote asset server',
+            false
+        );
+
+        if (assetsEnabled === undefined) {
+            return false;
+        }
+
+        profile.serverAssetsEnabled =
+            assetsEnabled;
+    }
 
     return true;
+}
+
+function resetServerTargets(
+    profile: ProjectProfile
+): void {
+    profile.serverLocalEnabled = false;
+    profile.remoteServerArchitecture = 'none';
+    profile.remoteServiceDomains = [];
+    profile.serverAssetsEnabled = false;
 }

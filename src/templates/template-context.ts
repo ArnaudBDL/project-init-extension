@@ -23,6 +23,10 @@ import {
 } from '../registries/frontend.registry';
 
 import {
+    getRemoteServerArchitectureLabel
+} from '../registries/server-architecture.registry';
+
+import {
     DESKTOP_SHELLS,
     getShellLabel,
     MOBILE_SHELLS,
@@ -40,6 +44,13 @@ export function createTemplateContext(
     const hasFrontend =
         profile.frontendStack !== 'none';
 
+    const hasFrontoffice =
+        hasFrontend;
+
+    const hasBackoffice =
+        hasFrontend &&
+        profile.backofficeEnabled;
+
     const hasFrontendVariant =
         profile.frontendVariant !== 'none';
 
@@ -49,10 +60,22 @@ export function createTemplateContext(
     const hasBackendFramework =
         profile.backendFramework !== 'none';
 
+    const hasRemoteServer =
+        profile.remoteServerArchitecture !==
+        'none';
+
+    const hasRemoteMonolith =
+        profile.remoteServerArchitecture ===
+        'monolith';
+
+    const hasMicroservices =
+        profile.remoteServerArchitecture ===
+        'microservices';
+
     const hasServer =
         hasBackendStack ||
         profile.serverLocalEnabled ||
-        profile.serverRemoteEnabled ||
+        hasRemoteServer ||
         profile.serverAssetsEnabled;
 
     const hasDatabases =
@@ -60,6 +83,10 @@ export function createTemplateContext(
 
     const hasSearchEngines =
         profile.searchEngines.length > 0;
+
+    const hasDataServices =
+        hasDatabases ||
+        hasSearchEngines;
 
     const hasDesktop =
         profile.desktopShell !== 'none';
@@ -75,9 +102,15 @@ export function createTemplateContext(
         hasMobile ||
         hasWeb;
 
-    const frontendName = getFrontendStackLabel(
-        profile.frontendStack
-    );
+    const hasRuntimeTargets =
+        profile.serverLocalEnabled ||
+        hasRemoteServer ||
+        profile.serverAssetsEnabled;
+
+    const frontendName =
+        getFrontendStackLabel(
+            profile.frontendStack
+        );
 
     const frontendVariantName =
         getFrontendVariantLabel(
@@ -85,9 +118,10 @@ export function createTemplateContext(
             profile.frontendVariant
         );
 
-    const backendName = getBackendStackLabel(
-        profile.backendStack
-    );
+    const backendName =
+        getBackendStackLabel(
+            profile.backendStack
+        );
 
     const backendFrameworkName =
         getBackendFrameworkLabel(
@@ -95,30 +129,35 @@ export function createTemplateContext(
             profile.backendFramework
         );
 
-    const databaseNames = createLabelList(
-        profile.databases,
-        DATABASES
-    );
+    const databaseNames =
+        createLabelList(
+            profile.databases,
+            DATABASES
+        );
 
-    const searchEngineNames = createLabelList(
-        profile.searchEngines,
-        SEARCH_ENGINES
-    );
+    const searchEngineNames =
+        createLabelList(
+            profile.searchEngines,
+            SEARCH_ENGINES
+        );
 
-    const desktopShellName = getShellLabel(
-        profile.desktopShell,
-        DESKTOP_SHELLS
-    );
+    const desktopShellName =
+        getShellLabel(
+            profile.desktopShell,
+            DESKTOP_SHELLS
+        );
 
-    const mobileShellName = getShellLabel(
-        profile.mobileShell,
-        MOBILE_SHELLS
-    );
+    const mobileShellName =
+        getShellLabel(
+            profile.mobileShell,
+            MOBILE_SHELLS
+        );
 
-    const webShellName = getShellLabel(
-        profile.webShell,
-        WEB_SHELLS
-    );
+    const webShellName =
+        getShellLabel(
+            profile.webShell,
+            WEB_SHELLS
+        );
 
     return {
         PROJECT_NAME:
@@ -128,58 +167,109 @@ export function createTemplateContext(
             profile.projectSlug,
 
         PROJECT_NAME_YAML:
-            yamlEscape(profile.projectName),
+            yamlEscape(
+                profile.projectName
+            ),
 
         PROJECT_SLUG_YAML:
-            yamlEscape(profile.projectSlug),
+            yamlEscape(
+                profile.projectSlug
+            ),
 
         PROJECT_HAS_FRONTEND:
-            booleanValue(hasFrontend),
+            booleanValue(
+                hasFrontend
+            ),
+
+        PROJECT_HAS_FRONTOFFICE:
+            booleanValue(
+                hasFrontoffice
+            ),
+
+        PROJECT_HAS_BACKOFFICE:
+            booleanValue(
+                hasBackoffice
+            ),
 
         PROJECT_HAS_FRONTEND_VARIANT:
-            booleanValue(hasFrontendVariant),
+            booleanValue(
+                hasFrontendVariant
+            ),
 
         PROJECT_HAS_BACKEND_STACK:
-            booleanValue(hasBackendStack),
+            booleanValue(
+                hasBackendStack
+            ),
 
         PROJECT_HAS_BACKEND_FRAMEWORK:
-            booleanValue(hasBackendFramework),
-        
-        PROJECT_HAS_RUNTIME_TARGETS:
             booleanValue(
-                profile.serverLocalEnabled ||
-                profile.serverRemoteEnabled
+                hasBackendFramework
+            ),
+
+        PROJECT_HAS_SERVER:
+            booleanValue(
+                hasServer
+            ),
+
+        PROJECT_HAS_REMOTE_SERVER:
+            booleanValue(
+                hasRemoteServer
+            ),
+
+        PROJECT_HAS_REMOTE_MONOLITH:
+            booleanValue(
+                hasRemoteMonolith
+            ),
+
+        PROJECT_HAS_MICROSERVICES:
+            booleanValue(
+                hasMicroservices
+            ),
+
+        PROJECT_HAS_DATABASES:
+            booleanValue(
+                hasDatabases
+            ),
+
+        PROJECT_HAS_SEARCH_ENGINES:
+            booleanValue(
+                hasSearchEngines
             ),
 
         PROJECT_HAS_DATA_SERVICES:
             booleanValue(
-                profile.databases.length > 0 ||
-                profile.searchEngines.length > 0
+                hasDataServices
             ),
 
-        PROJECT_HAS_SERVER:
-            booleanValue(hasServer),
-
-        PROJECT_HAS_DATABASES:
-            booleanValue(hasDatabases),
-
-        PROJECT_HAS_SEARCH_ENGINES:
-            booleanValue(hasSearchEngines),
-
         PROJECT_HAS_DESKTOP:
-            booleanValue(hasDesktop),
+            booleanValue(
+                hasDesktop
+            ),
 
         PROJECT_HAS_MOBILE:
-            booleanValue(hasMobile),
+            booleanValue(
+                hasMobile
+            ),
 
         PROJECT_HAS_WEB:
-            booleanValue(hasWeb),
+            booleanValue(
+                hasWeb
+            ),
 
         PROJECT_HAS_SHELL:
-            booleanValue(hasShell),
+            booleanValue(
+                hasShell
+            ),
+
+        PROJECT_HAS_RUNTIME_TARGETS:
+            booleanValue(
+                hasRuntimeTargets
+            ),
 
         PROJECT_HAS_LEGACY:
-            booleanValue(profile.legacyEnabled),
+            booleanValue(
+                profile.legacyEnabled
+            ),
 
         FRONTEND_STACK:
             profile.frontendStack,
@@ -212,12 +302,35 @@ export function createTemplateContext(
 
         ENABLED_SERVER_REMOTE:
             booleanValue(
-                profile.serverRemoteEnabled
+                hasRemoteServer
             ),
 
         ENABLED_SERVER_ASSETS:
             booleanValue(
                 profile.serverAssetsEnabled
+            ),
+
+        REMOTE_SERVER_ARCHITECTURE:
+            profile.remoteServerArchitecture,
+
+        REMOTE_SERVER_ARCHITECTURE_NAME:
+            getRemoteServerArchitectureLabel(
+                profile.remoteServerArchitecture
+            ),
+
+        REMOTE_SERVICE_DOMAINS:
+            profile.remoteServiceDomains.join(
+                ', '
+            ),
+
+        REMOTE_SERVICE_DOMAINS_YAML:
+            createRemoteServiceDomainsYaml(
+                profile.remoteServiceDomains
+            ),
+
+        REMOTE_SERVICE_BULLETS:
+            createRemoteServiceBullets(
+                profile
             ),
 
         PROJECT_DATABASE_NAMES:
@@ -270,14 +383,20 @@ export function createTemplateContext(
         PROJECT_WEB_SHELL_NAME:
             webShellName,
 
-        LEGACY_ENABLED:
-            booleanValue(profile.legacyEnabled),
-
         ACTIVE_SKILLS:
-            createActiveSkills(profile),
+            createActiveSkills(
+                profile
+            ),
 
         GENERATED_SKILL_DIRECTORIES:
-            createSkillDirectoryList(profile),
+            createSkillDirectoryList(
+                profile
+            ),
+
+        SERVER_GENERATED_STRUCTURE:
+            createServerGeneratedStructure(
+                profile
+            ),
 
         ENGINEERING_TECHNICAL_PROFILE:
             createEngineeringTechnicalProfile(
@@ -289,11 +408,6 @@ export function createTemplateContext(
                 profile
             ),
 
-        SERVER_GENERATED_STRUCTURE:
-            createServerGeneratedStructure(
-                profile
-            ),
-
         ENGINEERING_PROJECT_LAYOUT:
             createEngineeringProjectLayout(
                 profile
@@ -302,6 +416,53 @@ export function createTemplateContext(
         ENGINEERING_PREREQUISITES:
             createEngineeringPrerequisites(
                 profile
+            )
+    };
+}
+
+export function createGenericSkillTemplateContext(
+    profile: ProjectProfile,
+    skillKey: string
+): TemplateContext {
+    return {
+        ...createTemplateContext(
+            profile
+        ),
+
+        SKILL_KEY:
+            skillKey,
+
+        SKILL_LABEL:
+            getSkillLabel(
+                profile,
+                skillKey
+            )
+    };
+}
+
+export function createRemoteServiceContext(
+    profile: ProjectProfile,
+    domain: string
+): TemplateContext {
+    return {
+        ...createTemplateContext(
+            profile
+        ),
+
+        SERVICE_DOMAIN:
+            domain,
+
+        SERVICE_NAME:
+            [
+                profile.projectSlug,
+                'server',
+                domain,
+                'service'
+            ].join('-'),
+
+        SERVICE_DISPLAY_NAME:
+            toDisplayName(
+                domain
             )
     };
 }
@@ -324,7 +485,9 @@ export function getSelectedSkillKeys(
     return [
         ...new Set(
             selectedSkills.filter(
-                skill =>
+                (
+                    skill
+                ): skill is string =>
                     skill !== '' &&
                     skill !== 'none'
             )
@@ -336,26 +499,38 @@ export function getSkillLabel(
     profile: ProjectProfile,
     skillKey: string
 ): string {
-    if (skillKey === profile.frontendStack) {
+    if (
+        skillKey ===
+        profile.frontendStack
+    ) {
         return getFrontendStackLabel(
             skillKey
         );
     }
 
-    if (skillKey === profile.frontendVariant) {
+    if (
+        skillKey ===
+        profile.frontendVariant
+    ) {
         return getFrontendVariantLabel(
             profile.frontendStack,
             skillKey
         );
     }
 
-    if (skillKey === profile.backendStack) {
+    if (
+        skillKey ===
+        profile.backendStack
+    ) {
         return getBackendStackLabel(
             skillKey
         );
     }
 
-    if (skillKey === profile.backendFramework) {
+    if (
+        skillKey ===
+        profile.backendFramework
+    ) {
         return getBackendFrameworkLabel(
             profile.backendStack,
             skillKey
@@ -374,15 +549,18 @@ export function getSkillLabel(
 
     for (
         const variants
-        of Object.values(FRONTEND_VARIANTS)
+        of Object.values(
+            FRONTEND_VARIANTS
+        )
     ) {
-        const label = findLabel(
-            skillKey,
-            variants
-        );
+        const variantLabel =
+            findLabel(
+                skillKey,
+                variants
+            );
 
-        if (label) {
-            return label;
+        if (variantLabel) {
+            return variantLabel;
         }
     }
 
@@ -398,15 +576,18 @@ export function getSkillLabel(
 
     for (
         const frameworks
-        of Object.values(BACKEND_FRAMEWORKS)
+        of Object.values(
+            BACKEND_FRAMEWORKS
+        )
     ) {
-        const label = findLabel(
-            skillKey,
-            frameworks
-        );
+        const frameworkLabel =
+            findLabel(
+                skillKey,
+                frameworks
+            );
 
-        if (label) {
-            return label;
+        if (frameworkLabel) {
+            return frameworkLabel;
         }
     }
 
@@ -466,22 +647,28 @@ export function getSkillLabel(
 function booleanValue(
     value: boolean
 ): string {
-    return value ? 'true' : 'false';
+    return value
+        ? 'true'
+        : 'false';
 }
 
 function createLabelList(
     selectedKeys: readonly string[],
     registry: readonly DataService[]
 ): string {
-    if (selectedKeys.length === 0) {
+    if (
+        selectedKeys.length === 0
+    ) {
         return 'None';
     }
 
     return selectedKeys
         .map(
-            key => registry.find(
-                item => item.key === key
-            )?.label ?? key
+            key =>
+                registry.find(
+                    item =>
+                        item.key === key
+                )?.label ?? key
         )
         .join(', ');
 }
@@ -490,16 +677,21 @@ function createBulletList(
     selectedKeys: readonly string[],
     registry: readonly DataService[]
 ): string {
-    if (selectedKeys.length === 0) {
+    if (
+        selectedKeys.length === 0
+    ) {
         return 'None.';
     }
 
     return selectedKeys
         .map(
             key => {
-                const label = registry.find(
-                    item => item.key === key
-                )?.label ?? key;
+                const label =
+                    registry.find(
+                        item =>
+                            item.key ===
+                            key
+                    )?.label ?? key;
 
                 return `- ${label}`;
             }
@@ -512,7 +704,9 @@ function createYamlCollection(
     selectedKeys: readonly string[],
     registry: readonly DataService[]
 ): string {
-    if (selectedKeys.length === 0) {
+    if (
+        selectedKeys.length === 0
+    ) {
         return `  ${propertyName}: []`;
     }
 
@@ -520,18 +714,64 @@ function createYamlCollection(
         `  ${propertyName}:`
     ];
 
-    for (const key of selectedKeys) {
-        const label = registry.find(
-            item => item.key === key
-        )?.label ?? key;
+    for (
+        const key
+        of selectedKeys
+    ) {
+        const label =
+            registry.find(
+                item =>
+                    item.key === key
+            )?.label ?? key;
 
         lines.push(
-            `    - key: "${yamlEscape(key)}"`,
-            `      name: "${yamlEscape(label)}"`
+            `    - key: "${yamlEscape(
+                key
+            )}"`,
+            `      name: "${yamlEscape(
+                label
+            )}"`
         );
     }
 
     return lines.join('\n');
+}
+
+function createRemoteServiceDomainsYaml(
+    domains: readonly string[]
+): string {
+    if (
+        domains.length === 0
+    ) {
+        return '      []';
+    }
+
+    return domains
+        .map(
+            domain =>
+                `      - "${yamlEscape(
+                    domain
+                )}"`
+        )
+        .join('\n');
+}
+
+function createRemoteServiceBullets(
+    profile: ProjectProfile
+): string {
+    if (
+        profile.remoteServiceDomains
+            .length === 0
+    ) {
+        return 'None.';
+    }
+
+    return profile.remoteServiceDomains
+        .map(
+            domain =>
+                `- ${profile.projectSlug}-server-${domain}-service`
+        )
+        .join('\n');
 }
 
 function createActiveSkills(
@@ -607,7 +847,10 @@ function createActiveSkills(
         'web shell implementation technology'
     );
 
-    for (const database of profile.databases) {
+    for (
+        const database
+        of profile.databases
+    ) {
         lines.push(
             `- ${getSkillLabel(
                 profile,
@@ -642,7 +885,10 @@ function appendActiveSkill(
     label: string,
     description: string
 ): void {
-    if (!key || key === 'none') {
+    if (
+        !key ||
+        key === 'none'
+    ) {
         return;
     }
 
@@ -654,11 +900,13 @@ function appendActiveSkill(
 function createSkillDirectoryList(
     profile: ProjectProfile
 ): string {
-    const directories = getSelectedSkillKeys(
-        profile
-    ).map(
-        skill => `- ${skill}/`
-    );
+    const directories =
+        getSelectedSkillKeys(
+            profile
+        ).map(
+            skill =>
+                `- ${skill}/`
+        );
 
     directories.push(
         '- kanban/',
@@ -668,20 +916,96 @@ function createSkillDirectoryList(
     return directories.join('\n');
 }
 
+function createServerGeneratedStructure(
+    profile: ProjectProfile
+): string {
+    const lines: string[] = [];
+
+    if (
+        profile.backendStack !==
+        'none'
+    ) {
+        lines.push(
+            `- modules/${profile.projectSlug}-server-modules: reusable backend/runtime modules`
+        );
+    }
+
+    if (
+        profile.serverLocalEnabled
+    ) {
+        lines.push(
+            `- local/${profile.projectSlug}-server-local: local runtime entry point`
+        );
+    }
+
+    if (
+        profile.remoteServerArchitecture ===
+        'monolith'
+    ) {
+        lines.push(
+            `- remote/${profile.projectSlug}-server-remote: remote monolithic runtime`
+        );
+    }
+
+    if (
+        profile.remoteServerArchitecture ===
+        'microservices'
+    ) {
+        for (
+            const domain
+            of profile.remoteServiceDomains
+        ) {
+            lines.push(
+                `- remote/${profile.projectSlug}-server-${domain}-service: ${domain} remote service`
+            );
+        }
+    }
+
+    if (
+        profile.serverAssetsEnabled
+    ) {
+        lines.push(
+            `- remote/${profile.projectSlug}-server-assets: shared asset delivery`
+        );
+    }
+
+    return lines.length > 0
+        ? lines.join('\n')
+        : 'None.';
+}
+
 function createEngineeringTechnicalProfile(
     profile: ProjectProfile
 ): string {
     const lines: string[] = [];
 
-    if (profile.frontendStack !== 'none') {
+    if (
+        profile.frontendStack !==
+        'none'
+    ) {
         lines.push(
             `- Frontend: ${getFrontendStackLabel(
                 profile.frontendStack
             )}`
         );
+
+        lines.push(
+            '- Frontoffice: enabled'
+        );
     }
 
-    if (profile.frontendVariant !== 'none') {
+    if (
+        profile.backofficeEnabled
+    ) {
+        lines.push(
+            '- Backoffice: enabled'
+        );
+    }
+
+    if (
+        profile.frontendVariant !==
+        'none'
+    ) {
         lines.push(
             `- Frontend Variant: ${getFrontendVariantLabel(
                 profile.frontendStack,
@@ -690,7 +1014,10 @@ function createEngineeringTechnicalProfile(
         );
     }
 
-    if (profile.backendStack !== 'none') {
+    if (
+        profile.backendStack !==
+        'none'
+    ) {
         lines.push(
             `- Backend: ${getBackendStackLabel(
                 profile.backendStack
@@ -698,7 +1025,10 @@ function createEngineeringTechnicalProfile(
         );
     }
 
-    if (profile.backendFramework !== 'none') {
+    if (
+        profile.backendFramework !==
+        'none'
+    ) {
         lines.push(
             `- Backend Framework: ${getBackendFrameworkLabel(
                 profile.backendStack,
@@ -707,7 +1037,20 @@ function createEngineeringTechnicalProfile(
         );
     }
 
-    if (profile.databases.length > 0) {
+    if (
+        profile.remoteServerArchitecture !==
+        'none'
+    ) {
+        lines.push(
+            `- Remote Architecture: ${getRemoteServerArchitectureLabel(
+                profile.remoteServerArchitecture
+            )}`
+        );
+    }
+
+    if (
+        profile.databases.length > 0
+    ) {
         lines.push(
             `- Databases: ${createLabelList(
                 profile.databases,
@@ -716,7 +1059,9 @@ function createEngineeringTechnicalProfile(
         );
     }
 
-    if (profile.searchEngines.length > 0) {
+    if (
+        profile.searchEngines.length > 0
+    ) {
         lines.push(
             `- Search Engines: ${createLabelList(
                 profile.searchEngines,
@@ -725,7 +1070,10 @@ function createEngineeringTechnicalProfile(
         );
     }
 
-    if (profile.desktopShell !== 'none') {
+    if (
+        profile.desktopShell !==
+        'none'
+    ) {
         lines.push(
             `- Desktop Shell: ${getShellLabel(
                 profile.desktopShell,
@@ -734,7 +1082,10 @@ function createEngineeringTechnicalProfile(
         );
     }
 
-    if (profile.mobileShell !== 'none') {
+    if (
+        profile.mobileShell !==
+        'none'
+    ) {
         lines.push(
             `- Mobile Shell: ${getShellLabel(
                 profile.mobileShell,
@@ -743,7 +1094,10 @@ function createEngineeringTechnicalProfile(
         );
     }
 
-    if (profile.webShell !== 'none') {
+    if (
+        profile.webShell !==
+        'none'
+    ) {
         lines.push(
             `- Web Shell: ${getShellLabel(
                 profile.webShell,
@@ -762,55 +1116,30 @@ function createEngineeringRuntimeTargets(
 ): string {
     const lines: string[] = [];
 
-    if (profile.serverLocalEnabled) {
+    if (
+        profile.serverLocalEnabled
+    ) {
         lines.push(
-            '- Local Runtime: true'
+            '- Local Server: true'
         );
     }
 
-    if (profile.serverRemoteEnabled) {
+    if (
+        profile.remoteServerArchitecture !==
+        'none'
+    ) {
         lines.push(
-            '- Remote Runtime: true'
+            `- Remote Architecture: ${getRemoteServerArchitectureLabel(
+                profile.remoteServerArchitecture
+            )}`
         );
     }
 
-    if (profile.serverAssetsEnabled) {
+    if (
+        profile.serverAssetsEnabled
+    ) {
         lines.push(
-            '- Asset Server: true'
-        );
-    }
-
-    return lines.length > 0
-        ? lines.join('\n')
-        : 'None.';
-}
-
-function createServerGeneratedStructure(
-    profile: ProjectProfile
-): string {
-    const lines: string[] = [];
-
-    if (profile.backendStack !== 'none') {
-        lines.push(
-            '- modules: reusable backend/runtime modules'
-        );
-    }
-
-    if (profile.serverLocalEnabled) {
-        lines.push(
-            '- local: local runtime entry point'
-        );
-    }
-
-    if (profile.serverRemoteEnabled) {
-        lines.push(
-            '- remote: remote runtime entry point'
-        );
-    }
-
-    if (profile.serverAssetsEnabled) {
-        lines.push(
-            '- assets: shared asset delivery'
+            '- Remote Asset Server: true'
         );
     }
 
@@ -824,16 +1153,21 @@ function createEngineeringProjectLayout(
 ): string {
     const lines: string[] = [];
 
-    if (profile.frontendStack !== 'none') {
+    if (
+        profile.frontendStack !==
+        'none'
+    ) {
         lines.push(
-            '- client: frontend application'
+            '- client: frontoffice and optional backoffice applications'
         );
     }
 
     const hasServer =
-        profile.backendStack !== 'none' ||
+        profile.backendStack !==
+            'none' ||
         profile.serverLocalEnabled ||
-        profile.serverRemoteEnabled ||
+        profile.remoteServerArchitecture !==
+            'none' ||
         profile.serverAssetsEnabled;
 
     if (hasServer) {
@@ -843,9 +1177,12 @@ function createEngineeringProjectLayout(
     }
 
     const hasShell =
-        profile.desktopShell !== 'none' ||
-        profile.mobileShell !== 'none' ||
-        profile.webShell !== 'none';
+        profile.desktopShell !==
+            'none' ||
+        profile.mobileShell !==
+            'none' ||
+        profile.webShell !==
+            'none';
 
     if (hasShell) {
         lines.push(
@@ -863,7 +1200,10 @@ function createEngineeringPrerequisites(
 ): string {
     const lines: string[] = [];
 
-    if (profile.frontendStack !== 'none') {
+    if (
+        profile.frontendStack !==
+        'none'
+    ) {
         lines.push(
             `- Install the toolchain required by ${getFrontendStackLabel(
                 profile.frontendStack
@@ -871,7 +1211,10 @@ function createEngineeringPrerequisites(
         );
     }
 
-    if (profile.backendStack !== 'none') {
+    if (
+        profile.backendStack !==
+        'none'
+    ) {
         lines.push(
             `- Install the backend/runtime toolchain required by ${getBackendStackLabel(
                 profile.backendStack
@@ -879,7 +1222,10 @@ function createEngineeringPrerequisites(
         );
     }
 
-    if (profile.desktopShell !== 'none') {
+    if (
+        profile.desktopShell !==
+        'none'
+    ) {
         lines.push(
             `- Install the desktop shell toolchain required by ${getShellLabel(
                 profile.desktopShell,
@@ -888,7 +1234,10 @@ function createEngineeringPrerequisites(
         );
     }
 
-    if (profile.mobileShell !== 'none') {
+    if (
+        profile.mobileShell !==
+        'none'
+    ) {
         lines.push(
             `- Install the mobile shell toolchain required by ${getShellLabel(
                 profile.mobileShell,
@@ -897,7 +1246,10 @@ function createEngineeringPrerequisites(
         );
     }
 
-    if (profile.webShell !== 'none') {
+    if (
+        profile.webShell !==
+        'none'
+    ) {
         lines.push(
             `- Install the web shell or orchestration tooling required by ${getShellLabel(
                 profile.webShell,
@@ -906,7 +1258,9 @@ function createEngineeringPrerequisites(
         );
     }
 
-    if (profile.serverAssetsEnabled) {
+    if (
+        profile.serverAssetsEnabled
+    ) {
         lines.push(
             '- Define shared asset publishing requirements for this project.'
         );
@@ -925,7 +1279,8 @@ function findLabel(
     }[]
 ): string | undefined {
     return registry.find(
-        item => item.key === key
+        item =>
+            item.key === key
     )?.label;
 }
 
@@ -934,14 +1289,36 @@ function findShellLabel(
     registry: readonly Shell[]
 ): string | undefined {
     return registry.find(
-        item => item.key === key
+        item =>
+            item.key === key
     )?.label;
+}
+
+function toDisplayName(
+    value: string
+): string {
+    return value
+        .split('-')
+        .filter(Boolean)
+        .map(
+            word =>
+                word.charAt(0)
+                    .toUpperCase() +
+                word.slice(1)
+        )
+        .join(' ');
 }
 
 function yamlEscape(
     value: string
 ): string {
     return value
-        .replace(/\\/g, '\\\\')
-        .replace(/"/g, '\\"');
+        .replace(
+            /\\/g,
+            '\\\\'
+        )
+        .replace(
+            /"/g,
+            '\\"'
+        );
 }

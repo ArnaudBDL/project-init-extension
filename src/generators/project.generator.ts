@@ -13,19 +13,27 @@ import {
 } from '../services/filesystem.service';
 
 import {
+    TemplateContext,
     TemplateFile,
     TemplateService
 } from '../services/template.service';
 
 import {
+    createGenericSkillTemplateContext,
+    createRemoteServiceContext,
     createTemplateContext,
     getSelectedSkillKeys
 } from '../templates/template-context';
 
-const PERMANENT_SKILL_KEYS = [
-    'kanban',
-    'specs'
-] as const;
+const SPECIALIZED_SKILL_KEYS =
+    new Set<string>([
+        'angular',
+        'html-js-css',
+        'go',
+        'tauri',
+        'docker',
+        'sqlite'
+    ]);
 
 export class ProjectGenerator {
     private readonly filesystemService =
@@ -35,7 +43,8 @@ export class ProjectGenerator {
         new TemplateService();
 
     public constructor(
-        private readonly extensionUri: vscode.Uri
+        private readonly extensionUri:
+            vscode.Uri
     ) {
     }
 
@@ -48,15 +57,17 @@ export class ProjectGenerator {
             createdDirectories: []
         };
 
-        const scaffoldRootUri = vscode.Uri.joinPath(
-            this.extensionUri,
-            'resources',
-            'scaffold'
-        );
+        const scaffoldRootUri =
+            vscode.Uri.joinPath(
+                this.extensionUri,
+                'resources',
+                'scaffold'
+            );
 
-        const workspaceRootUri = vscode.Uri.file(
-            profile.workspaceRoot
-        );
+        const workspaceRootUri =
+            vscode.Uri.file(
+                profile.workspaceRoot
+            );
 
         if (
             !(await this.filesystemService.exists(
@@ -68,23 +79,24 @@ export class ProjectGenerator {
             );
         }
 
-        await this.validateRequiredSkills(
-            scaffoldRootUri,
-            profile
-        );
-
-        const context = createTemplateContext(
-            profile
-        );
-
-        const templates =
-            await this.templateService.findTemplates(
-                scaffoldRootUri
+        const context =
+            createTemplateContext(
+                profile
             );
 
-        const generatedDirectories = new Set<string>();
+        const templates =
+            await this.templateService
+                .findTemplates(
+                    scaffoldRootUri
+                );
 
-        for (const template of templates) {
+        const generatedDirectories =
+            new Set<string>();
+
+        for (
+            const template
+            of templates
+        ) {
             if (
                 !this.shouldGenerateTemplate(
                     template,
@@ -103,6 +115,20 @@ export class ProjectGenerator {
             );
         }
 
+        await this.generateGenericSkills(
+            profile,
+            workspaceRootUri,
+            report,
+            generatedDirectories
+        );
+
+        await this.generateRemoteServices(
+            profile,
+            workspaceRootUri,
+            report,
+            generatedDirectories
+        );
+
         await this.cleanupGeneratedDirectories(
             workspaceRootUri,
             generatedDirectories
@@ -117,73 +143,19 @@ export class ProjectGenerator {
         return report;
     }
 
-    private async validateRequiredSkills(
-        scaffoldRootUri: vscode.Uri,
-        profile: ProjectProfile
-    ): Promise<void> {
-        const requiredSkillKeys = [
-            ...getSelectedSkillKeys(profile),
-            ...PERMANENT_SKILL_KEYS
-        ];
-
-        const invalidSkills: string[] = [];
-
-        for (const skillKey of requiredSkillKeys) {
-            const skillUri = vscode.Uri.joinPath(
-                scaffoldRootUri,
-                '00-META',
-                'skills',
-                skillKey,
-                'SKILL.md'
-            );
-
-            if (
-                !(await this.filesystemService.exists(
-                    skillUri
-                ))
-            ) {
-                invalidSkills.push(
-                    `${skillKey}: missing 00-META/skills/${skillKey}/SKILL.md`
-                );
-
-                continue;
-            }
-
-            const content =
-                await this.filesystemService.readFile(
-                    skillUri
-                );
-
-            if (content.trim() === '') {
-                invalidSkills.push(
-                    `${skillKey}: empty 00-META/skills/${skillKey}/SKILL.md`
-                );
-            }
-        }
-
-        if (invalidSkills.length > 0) {
-            throw new Error(
-                [
-                    'Required specialized skills are missing or empty:',
-                    ...invalidSkills.map(
-                        skill => `- ${skill}`
-                    )
-                ].join('\n')
-            );
-        }
-    }
-
     private async generateTemplate(
         template: TemplateFile,
-        context: Readonly<Record<string, string>>,
+        context: TemplateContext,
         workspaceRootUri: vscode.Uri,
         report: GenerationReport,
-        generatedDirectories: Set<string>
+        generatedDirectories:
+            Set<string>
     ): Promise<void> {
         const templateContent =
-            await this.templateService.readTemplate(
-                template.sourceUri
-            );
+            await this.templateService
+                .readTemplate(
+                    template.sourceUri
+                );
 
         const renderedContent =
             this.templateService.render(
@@ -191,59 +163,353 @@ export class ProjectGenerator {
                 context
             );
 
-        const targetUri = vscode.Uri.joinPath(
-            workspaceRootUri,
-            ...template.relativePath.split('/')
-        );
+        const relativePath =
+            this.templateService.renderPath(
+                template.relativePath,
+                context
+            );
+
+        const targetUri =
+            vscode.Uri.joinPath(
+                workspaceRootUri,
+                ...relativePath.split('/')
+            );
 
         const result =
-            await this.filesystemService.writeFile(
-                targetUri,
-                renderedContent,
-                false
-            );
+            await this.filesystemService
+                .writeFile(
+                    targetUri,
+                    renderedContent,
+                    false
+                );
 
         if (result.created) {
             report.createdFiles.push(
-                template.relativePath
+                relativePath
             );
         } else {
             report.skippedFiles.push(
-                template.relativePath
+                relativePath
             );
         }
 
         this.collectParentDirectories(
-            template.relativePath,
+            relativePath,
             generatedDirectories
         );
+    }
+
+    private async generateGenericSkills(
+        profile: ProjectProfile,
+        workspaceRootUri: vscode.Uri,
+        report: GenerationReport,
+        generatedDirectories:
+            Set<string>
+    ): Promise<void> {
+        const genericTemplateUri =
+            vscode.Uri.joinPath(
+                this.extensionUri,
+                'resources',
+                'templates',
+                'skills',
+                'generic',
+                'SKILL.md'
+            );
+
+        const genericSkillKeys =
+            getSelectedSkillKeys(
+                profile
+            ).filter(
+                skill =>
+                    !SPECIALIZED_SKILL_KEYS
+                        .has(skill)
+            );
+
+        if (
+            genericSkillKeys.length === 0
+        ) {
+            return;
+        }
+
+        if (
+            !(await this.filesystemService
+                .exists(
+                    genericTemplateUri
+                ))
+        ) {
+            throw new Error(
+                'The generic skill template is missing: resources/templates/skills/generic/SKILL.md'
+            );
+        }
+
+        const genericTemplate =
+            await this.templateService
+                .readTemplate(
+                    genericTemplateUri
+                );
+
+        for (
+            const skillKey
+            of genericSkillKeys
+        ) {
+            const relativePath = [
+                '00-META',
+                'skills',
+                skillKey,
+                'SKILL.md'
+            ].join('/');
+
+            const targetUri =
+                vscode.Uri.joinPath(
+                    workspaceRootUri,
+                    ...relativePath.split(
+                        '/'
+                    )
+                );
+
+            const context =
+                createGenericSkillTemplateContext(
+                    profile,
+                    skillKey
+                );
+
+            const renderedContent =
+                this.templateService.render(
+                    genericTemplate,
+                    context
+                );
+
+            const result =
+                await this.filesystemService
+                    .writeFile(
+                        targetUri,
+                        renderedContent,
+                        false
+                    );
+
+            if (result.created) {
+                report.createdFiles.push(
+                    relativePath
+                );
+            } else {
+                report.skippedFiles.push(
+                    relativePath
+                );
+            }
+
+            this.collectParentDirectories(
+                relativePath,
+                generatedDirectories
+            );
+        }
+    }
+
+    private async generateRemoteServices(
+        profile: ProjectProfile,
+        workspaceRootUri: vscode.Uri,
+        report: GenerationReport,
+        generatedDirectories:
+            Set<string>
+    ): Promise<void> {
+        if (
+            profile
+                .remoteServerArchitecture !==
+            'microservices'
+        ) {
+            return;
+        }
+
+        const templateUri =
+            vscode.Uri.joinPath(
+                this.extensionUri,
+                'resources',
+                'templates',
+                'engineering',
+                'server-domain-service',
+                'README.md'
+            );
+
+        if (
+            !(await this.filesystemService
+                .exists(
+                    templateUri
+                ))
+        ) {
+            throw new Error(
+                'The remote service README template is missing: resources/templates/engineering/server-domain-service/README.md'
+            );
+        }
+
+        const templateContent =
+            await this.templateService
+                .readTemplate(
+                    templateUri
+                );
+
+        for (
+            const domain
+            of profile
+                .remoteServiceDomains
+        ) {
+            const context =
+                createRemoteServiceContext(
+                    profile,
+                    domain
+                );
+
+            const renderedContent =
+                this.templateService.render(
+                    templateContent,
+                    context
+                );
+
+            const relativePath = [
+                '04-ENGINEERING',
+                'server',
+                'remote',
+                [
+                    profile.projectSlug,
+                    'server',
+                    domain,
+                    'service'
+                ].join('-'),
+                'README.md'
+            ].join('/');
+
+            const targetUri =
+                vscode.Uri.joinPath(
+                    workspaceRootUri,
+                    ...relativePath.split(
+                        '/'
+                    )
+                );
+
+            const result =
+                await this.filesystemService
+                    .writeFile(
+                        targetUri,
+                        renderedContent,
+                        false
+                    );
+
+            if (result.created) {
+                report.createdFiles.push(
+                    relativePath
+                );
+            } else {
+                report.skippedFiles.push(
+                    relativePath
+                );
+            }
+
+            this.collectParentDirectories(
+                relativePath,
+                generatedDirectories
+            );
+        }
     }
 
     private shouldGenerateTemplate(
         template: TemplateFile,
         profile: ProjectProfile
     ): boolean {
-        const path = template.relativePath;
+        const path =
+            template.relativePath;
 
-        const hasFrontend =
-            profile.frontendStack !== 'none';
+        if (
+            path.includes(
+                '__PROJECT_SLUG__-backoffice/'
+            ) &&
+            !profile.backofficeEnabled
+        ) {
+            return false;
+        }
 
-        const hasServer =
-            profile.backendStack !== 'none' ||
-            profile.serverLocalEnabled ||
-            profile.serverRemoteEnabled ||
-            profile.serverAssetsEnabled;
+        if (
+            path.includes(
+                '__PROJECT_SLUG__-frontoffice/'
+            ) &&
+            profile.frontendStack ===
+                'none'
+        ) {
+            return false;
+        }
 
-        const hasShell =
-            profile.desktopShell !== 'none' ||
-            profile.mobileShell !== 'none' ||
-            profile.webShell !== 'none';
+        if (
+            path.includes(
+                '__PROJECT_SLUG__-server-modules/'
+            ) &&
+            profile.backendStack ===
+                'none'
+        ) {
+            return false;
+        }
+
+        if (
+            path.includes(
+                '__PROJECT_SLUG__-server-local/'
+            ) &&
+            !profile.serverLocalEnabled
+        ) {
+            return false;
+        }
+
+        if (
+            path.includes(
+                '__PROJECT_SLUG__-server-remote/'
+            ) &&
+            profile
+                .remoteServerArchitecture !==
+                'monolith'
+        ) {
+            return false;
+        }
+
+        if (
+            path.includes(
+                '__PROJECT_SLUG__-server-assets/'
+            ) &&
+            !profile.serverAssetsEnabled
+        ) {
+            return false;
+        }
+
+        if (
+            path.includes(
+                '__PROJECT_SLUG__-shell-desktop/'
+            ) &&
+            profile.desktopShell ===
+                'none'
+        ) {
+            return false;
+        }
+
+        if (
+            path.includes(
+                '__PROJECT_SLUG__-shell-mobile/'
+            ) &&
+            profile.mobileShell ===
+                'none'
+        ) {
+            return false;
+        }
+
+        if (
+            path.includes(
+                '__PROJECT_SLUG__-shell-web/'
+            ) &&
+            profile.webShell ===
+                'none'
+        ) {
+            return false;
+        }
 
         if (
             path.startsWith(
                 '04-ENGINEERING/client/'
             ) &&
-            !hasFrontend
+            profile.frontendStack ===
+                'none'
         ) {
             return false;
         }
@@ -252,7 +518,9 @@ export class ProjectGenerator {
             path.startsWith(
                 '04-ENGINEERING/server/'
             ) &&
-            !hasServer
+            !this.hasServer(
+                profile
+            )
         ) {
             return false;
         }
@@ -261,7 +529,8 @@ export class ProjectGenerator {
             path.startsWith(
                 '04-ENGINEERING/server/modules/'
             ) &&
-            profile.backendStack === 'none'
+            profile.backendStack ===
+                'none'
         ) {
             return false;
         }
@@ -279,16 +548,9 @@ export class ProjectGenerator {
             path.startsWith(
                 '04-ENGINEERING/server/remote/'
             ) &&
-            !profile.serverRemoteEnabled
-        ) {
-            return false;
-        }
-
-        if (
-            path.startsWith(
-                '04-ENGINEERING/server/assets/'
-            ) &&
-            !profile.serverAssetsEnabled
+            profile
+                .remoteServerArchitecture ===
+                'none'
         ) {
             return false;
         }
@@ -297,34 +559,9 @@ export class ProjectGenerator {
             path.startsWith(
                 '04-ENGINEERING/shell/'
             ) &&
-            !hasShell
-        ) {
-            return false;
-        }
-
-        if (
-            path.startsWith(
-                '04-ENGINEERING/shell/desktop/'
-            ) &&
-            profile.desktopShell === 'none'
-        ) {
-            return false;
-        }
-
-        if (
-            path.startsWith(
-                '04-ENGINEERING/shell/mobile/'
-            ) &&
-            profile.mobileShell === 'none'
-        ) {
-            return false;
-        }
-
-        if (
-            path.startsWith(
-                '04-ENGINEERING/shell/web/'
-            ) &&
-            profile.webShell === 'none'
+            !this.hasShell(
+                profile
+            )
         ) {
             return false;
         }
@@ -338,10 +575,11 @@ export class ProjectGenerator {
             return false;
         }
 
-        return this.shouldGenerateSkillTemplate(
-            path,
-            profile
-        );
+        return this
+            .shouldGenerateSkillTemplate(
+                path,
+                profile
+            );
     }
 
     private shouldGenerateSkillTemplate(
@@ -372,15 +610,46 @@ export class ProjectGenerator {
         );
     }
 
+    private hasServer(
+        profile: ProjectProfile
+    ): boolean {
+        return (
+            profile.backendStack !==
+                'none' ||
+            profile.serverLocalEnabled ||
+            profile
+                .remoteServerArchitecture !==
+                'none' ||
+            profile.serverAssetsEnabled
+        );
+    }
+
+    private hasShell(
+        profile: ProjectProfile
+    ): boolean {
+        return (
+            profile.desktopShell !==
+                'none' ||
+            profile.mobileShell !==
+                'none' ||
+            profile.webShell !==
+                'none'
+        );
+    }
+
     private collectParentDirectories(
         relativePath: string,
-        generatedDirectories: Set<string>
+        generatedDirectories:
+            Set<string>
     ): void {
-        const parts = relativePath.split('/');
+        const parts =
+            relativePath.split('/');
 
         parts.pop();
 
-        while (parts.length > 0) {
+        while (
+            parts.length > 0
+        ) {
             generatedDirectories.add(
                 parts.join('/')
             );
@@ -391,28 +660,37 @@ export class ProjectGenerator {
 
     private async cleanupGeneratedDirectories(
         workspaceRootUri: vscode.Uri,
-        generatedDirectories: Set<string>
+        generatedDirectories:
+            Set<string>
     ): Promise<void> {
-        const directories = Array.from(
-            generatedDirectories
-        ).sort(
-            (
-                first,
-                second
-            ): number =>
-                second.split('/').length -
-                first.split('/').length
-        );
-
-        for (const directory of directories) {
-            const directoryUri = vscode.Uri.joinPath(
-                workspaceRootUri,
-                ...directory.split('/')
+        const directories =
+            Array.from(
+                generatedDirectories
+            ).sort(
+                (
+                    first,
+                    second
+                ): number =>
+                    second.split('/')
+                        .length -
+                    first.split('/')
+                        .length
             );
 
-            await this.filesystemService.cleanupGitkeep(
-                directoryUri
-            );
+        for (
+            const directory
+            of directories
+        ) {
+            const directoryUri =
+                vscode.Uri.joinPath(
+                    workspaceRootUri,
+                    ...directory.split('/')
+                );
+
+            await this.filesystemService
+                .cleanupGitkeep(
+                    directoryUri
+                );
         }
     }
 }

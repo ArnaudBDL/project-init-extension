@@ -21,6 +21,10 @@ import {
 } from '../registries/frontend.registry';
 
 import {
+    getRemoteServerArchitectureLabel
+} from '../registries/server-architecture.registry';
+
+import {
     DESKTOP_SHELLS,
     getShellLabel,
     MOBILE_SHELLS,
@@ -35,24 +39,41 @@ export async function showInterviewSummary(
         `Name: ${profile.projectName}`,
         `Slug: ${profile.projectSlug}`,
         '',
-        'FRONTEND',
-        `Stack: ${getFrontendStackLabel(profile.frontendStack)}`,
-        `Variant: ${getFrontendVariantLabel(
+        'CLIENT',
+        `Frontoffice: ${yesNo(
+            profile.frontendStack !== 'none'
+        )}`,
+        `Backoffice: ${yesNo(
+            profile.backofficeEnabled
+        )}`,
+        `Frontend stack: ${getFrontendStackLabel(
+            profile.frontendStack
+        )}`,
+        `Frontend variant: ${getFrontendVariantLabel(
             profile.frontendStack,
             profile.frontendVariant
         )}`,
         '',
-        'BACKEND',
-        `Stack: ${getBackendStackLabel(profile.backendStack)}`,
-        `Framework: ${getBackendFrameworkLabel(
+        'SERVER',
+        `Backend: ${getBackendStackLabel(
+            profile.backendStack
+        )}`,
+        `Backend framework: ${getBackendFrameworkLabel(
             profile.backendStack,
             profile.backendFramework
         )}`,
-        '',
-        'APP SERVERS',
-        `Local server: ${yesNo(profile.serverLocalEnabled)}`,
-        `Remote server: ${yesNo(profile.serverRemoteEnabled)}`,
-        `Asset server: ${yesNo(profile.serverAssetsEnabled)}`,
+        `Local server: ${yesNo(
+            profile.serverLocalEnabled
+        )}`,
+        `Remote architecture: ${getRemoteServerArchitectureLabel(
+            profile.remoteServerArchitecture
+        )}`,
+        `Remote services: ${getRemoteServicesSummary(
+            profile
+        )}`,
+        `Remote asset server: ${yesNo(
+            profile.serverAssetsEnabled
+        )}`,
         '',
         'DATA',
         `Databases: ${getDataServiceLabels(
@@ -64,7 +85,7 @@ export async function showInterviewSummary(
             SEARCH_ENGINES
         )}`,
         '',
-        'APP SHELLS',
+        'SHELLS',
         `Desktop: ${getShellLabel(
             profile.desktopShell,
             DESKTOP_SHELLS
@@ -79,23 +100,49 @@ export async function showInterviewSummary(
         )}`,
         '',
         'LEGACY',
-        `Legacy migration: ${yesNo(profile.legacyEnabled)}`,
+        `Legacy migration: ${yesNo(
+            profile.legacyEnabled
+        )}`,
         '',
         `Workspace: ${profile.workspaceRoot}`
     ].join('\n');
 
-    const selectedAction = await vscode.window.showInformationMessage(
-        summary,
-        {
-            modal: true
-        },
-        'Generate',
-        'Cancel'
-    );
+    const selectedAction =
+        await vscode.window.showInformationMessage(
+            summary,
+            {
+                modal: true
+            },
+            'Generate',
+            'Cancel'
+        );
 
     return selectedAction === 'Generate';
 }
 
-function yesNo(value: boolean): string {
+function getRemoteServicesSummary(
+    profile: ProjectProfile
+): string {
+    if (
+        profile.remoteServerArchitecture !==
+        'microservices'
+    ) {
+        return 'None';
+    }
+
+    if (
+        profile.remoteServiceDomains.length === 0
+    ) {
+        return 'None';
+    }
+
+    return profile.remoteServiceDomains.join(
+        ', '
+    );
+}
+
+function yesNo(
+    value: boolean
+): string {
     return value ? 'Yes' : 'No';
 }

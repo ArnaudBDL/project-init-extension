@@ -177,6 +177,10 @@ Do not introduce Kubernetes or another orchestration platform unless it is expli
 - Validate image builds after Docker-related changes.
 - Validate container startup and service connectivity after composition changes.
 - Keep Docker documentation synchronized with executable configuration.
+- Validate all external input at the boundary where it enters the system.
+- Preserve existing project conventions unless an approved specification changes them.
+- Keep code, configuration, tests and documentation synchronized.
+- Run the relevant formatter, build, validation and test commands before completion.
 
 ## Image Rules
 
@@ -243,25 +247,29 @@ When a composition file is used:
 - Do not mount the Docker socket without an explicit and documented requirement.
 - Do not rely only on container startup order for service readiness.
 - Do not claim that a containerized application is production-ready without the required validation and deployment decisions.
+- Do not introduce unrelated dependencies or architectural layers.
+- Do not hardcode credentials, tokens or environment-specific secrets.
+- Do not claim validation succeeded unless the command was actually executed successfully.
 
 ## Agent Instructions
 
-Before generating or modifying Docker configuration:
+Before changing Docker code:
 
 1. Read this skill completely.
-2. Read `00-META/context/stack.yml`.
-3. Identify the selected frontend stack.
-4. Identify the selected backend/runtime stack.
-5. Identify the selected databases and search engines.
-6. Identify enabled local, remote and asset server targets.
-7. Inspect the existing Dockerfiles and composition files.
-8. Preserve the separation between frontend, backend, data and shell responsibilities.
-9. Generate only services required by the selected project profile.
-10. Keep Docker focused on integration, execution, packaging and delivery.
-11. Validate image builds.
-12. Validate container startup.
-13. Validate service health and connectivity.
-14. Report any validation that could not be executed.
+2. Read `00-META/context/stack.yml` and the active specification.
+3. Inspect the existing implementation and tests.
+4. Follow the established project structure and naming.
+5. Make the smallest coherent change that satisfies the specification.
+6. Validate the affected code with the project commands.
+7. Report assumptions, limitations and any validation that could not be executed.
+
+Before generating or modifying Docker configuration specifically, also:
+
+8. Identify the selected frontend stack, backend/runtime stack, databases and search engines from `00-META/context/stack.yml`.
+9. Identify enabled local, remote and asset server targets.
+10. Preserve the separation between frontend, backend, data and shell responsibilities.
+11. Generate only services required by the selected project profile.
+12. Validate image builds, container startup and service health and connectivity.
 
 When explaining the architecture, use the following terminology:
 

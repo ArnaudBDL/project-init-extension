@@ -1,3 +1,8 @@
+export type RemoteServerArchitecture =
+    | 'none'
+    | 'monolith'
+    | 'microservices';
+
 export interface ProjectProfile {
     workspaceRoot: string;
 
@@ -6,12 +11,16 @@ export interface ProjectProfile {
 
     frontendStack: string;
     frontendVariant: string;
+    backofficeEnabled: boolean;
 
     backendStack: string;
     backendFramework: string;
 
     serverLocalEnabled: boolean;
-    serverRemoteEnabled: boolean;
+
+    remoteServerArchitecture: RemoteServerArchitecture;
+    remoteServiceDomains: string[];
+
     serverAssetsEnabled: boolean;
 
     databases: string[];
